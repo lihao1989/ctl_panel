@@ -15,7 +15,7 @@ typedef struct Node
 	struct Node *next;
 } *LinkList;
 
-//在顺序链表L中第i个结点位置之前插入新的数据元素e
+//在顺序链表L中第i个结点位置之前插入数据元素e
 bool ListInsert(LinkList &L,int i, int e)
 {
 	int j;
