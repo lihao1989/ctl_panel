@@ -1,6 +1,6 @@
 /**
  * @author 345570600@qq.com
- * @copyright lihao
+ * @copyright NULL
  * @brief [七大排序算法，代码实现]
  * @details 
  * 从时间上可以看出，MAX越小，采用简单排序合适，MAX越大，采用改进的排序方法合适

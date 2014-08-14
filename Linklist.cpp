@@ -1,6 +1,6 @@
 /**
  * @author 345570600@qq.com
- * @copyright lihao
+ * @copyright NULL
  * @brief [单链表操作，代码实现]
  * @details
  * 包括单链表的插入与删除，单链表的整表创建，整表删除，单链表的读取
