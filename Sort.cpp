@@ -23,6 +23,7 @@
 #define MAX 100000
 using namespace std;
 
+//快速排序
 void quick_sort(int *a,int low,int high)
 {
 	if(low<high)
@@ -45,6 +46,7 @@ void quick_sort(int *a,int low,int high)
 	}	
 }
 
+//冒泡排序
 void bubble_sort(int *a,int n)
 {
 	for(int i=0;i<n-1;i++)
@@ -61,6 +63,7 @@ void bubble_sort(int *a,int n)
 	}
 }
 
+//冒泡排序改进，还可以通过计算几次交换进行改进，代码没写
 void bubble_sort2(int *a,int n)
 {
 	bool flag = true;
@@ -80,6 +83,7 @@ void bubble_sort2(int *a,int n)
 	}
 }
 
+//选择排序
 void selset_sort(int *a,int n)
 {
 	int i,j,min;
@@ -100,6 +104,7 @@ void selset_sort(int *a,int n)
 	}
 }
 
+//插入排序
 void insert_sort(int *a,int n)
 {
 	int i,j,temp;
@@ -115,6 +120,7 @@ void insert_sort(int *a,int n)
 	}
 }
 
+//希尔排序
 void shell_sort(int *a,int n)
 {
 	int i,j,temp;
@@ -135,6 +141,7 @@ void shell_sort(int *a,int n)
 	}while(k>1);
 }
 
+//堆排序
 void heapadjust(int *a,int s,int m)
 {
 	int i,temp=a[s];
@@ -163,6 +170,7 @@ void heap_sort(int *a,int n)
 	}
 }
 
+//归并排序
 void merge_arry(int *a,int first,int mid,int last,int *temp)
 {
 	int i=first,j=mid,m=mid+1,n=last;
@@ -197,6 +205,7 @@ void merge_sort(int *a,int n)
 	msort(a,0,n-1,p);
 	delete[] p;
 }
+
 
 bool Is_increase(int *a,int n)
 {
