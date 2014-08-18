@@ -47,9 +47,42 @@ class eNB_ping(gr.top_block):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = 2e6
-        self.prbl = prbl = 6
-        self.fftl = fftl = 128
+        try:
+            if param['Bandwidth'] == '1.4':
+                self.prbl = prbl = 6
+                self.fftl = fftl = 128
+                self.multiply_const = multiply_const = 128.0
+            else:
+                self.prbl = prbl = 15
+                self.fftl = fftl = 256
+                self.multiply_const = multiply_const = 256.0
+
+            if param['samp_rate_G'] == '2M':
+                self.samp_rate = samp_rate = 2000000
+            else:
+                self.samp_rate = samp_rate = 4000000 
+
+            if param['mod_type_d'] == 'QPSK':
+                self.mod_type_d = mod_type_d = 2
+            else:
+                self.mod_type_d = mod_type_d = 4
+
+            if param['mod_type_u'] == 'QPSK':
+                self.mod_type_u = mod_type_u = 2
+            else:
+                self.mod_type_u = mod_type_u = 4
+
+            self.threshold = threshold = float(param['Threshold'])
+            self.gain_r = gain_r = int(param['gain_r_G'])
+            self.gain_s = gain_s = int(param['gain_s_G'])
+            self.RNTI_A = RNTI_A = int(param['RNTI_A'])
+            self.id_cell = id_cell = int(param['id_cell'])
+            self.rate_d = rate_d = int(param['exp_code_rate_d_G'])
+            self.rate_u = rate_u = int(param['exp_code_rate_u_G'])
+            self.DMRS2_G = DMRS2_G = int(param['DMRS2_G'])
+            self.sacle_0 = sacle_0 = 1024
+            self.sacle = sacle = 1024
+        except: print '变量初始化失败'
 
         ##################################################
         # Blocks
@@ -63,7 +96,7 @@ class eNB_ping(gr.top_block):
         )
         self.uhd_usrp_source_0.set_samp_rate(samp_rate)
         self.uhd_usrp_source_0.set_center_freq(1e9, 0)
-        self.uhd_usrp_source_0.set_gain(15, 0)
+        self.uhd_usrp_source_0.set_gain(gain_r, 0)
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
             device_addr="addr=192.168.10.2",
             stream_args=uhd.stream_args(
@@ -73,17 +106,17 @@ class eNB_ping(gr.top_block):
         )
         self.uhd_usrp_sink_0.set_samp_rate(samp_rate)
         self.uhd_usrp_sink_0.set_center_freq(9.0e8, 0)
-        self.uhd_usrp_sink_0.set_gain(20, 0)
+        self.uhd_usrp_sink_0.set_gain(gain_s, 0)
         self.rational_resampler_xxx_0 = filter.rational_resampler_ccc(
                 interpolation=25,
                 decimation=24,
                 taps=None,
                 fractional_bw=None,
         )
-        self.lte_sat_ul_subframe_demapper_0 = lte_sat.ul_subframe_demapper(10,6)
-        self.lte_sat_ul_baseband_sync_0 = lte_sat.ul_baseband_sync(prbl,fftl,10,False)
-        self.lte_sat_layer2_0 = lte_sat.layer2(10,prbl,2,0.4,2,0.4,3,False)
-        self.lte_sat_dl_subframe_mapper_0_0 = lte_sat.dl_subframe_mapper(prbl,10,False)
+        self.lte_sat_ul_subframe_demapper_0 = lte_sat.ul_subframe_demapper(id_cell,prbl)
+        self.lte_sat_ul_baseband_sync_0 = lte_sat.ul_baseband_sync(prbl,fftl,id_cell,False)
+        self.lte_sat_layer2_0 = lte_sat.layer2(id_cell,prbl,mod_type_d,rate_d,mod_type_u,rate_u,DMRS2_G,False)
+        self.lte_sat_dl_subframe_mapper_0_0 = lte_sat.dl_subframe_mapper(prbl,id_cell,False)
         self.lte_sat_dl_baseband_generator_0 = lte_sat.dl_baseband_generator(prbl, fftl)
         self.blocks_tuntap_pdu_0 = blocks.tuntap_pdu("tun0", 10000)
 

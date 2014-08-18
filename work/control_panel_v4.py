@@ -737,8 +737,11 @@ class Gateway_station(wx.Panel):
         try: s_id_sc = self.param_config.getint("Gateway_station", "s_id_sc")
         except: s_id_sc = 5
 
-        try: s_modtype = self.param_config.get("Gateway_station", "s_modtype")
-        except: s_modtype = 'QPSK'
+        try: s_modtype_u = self.param_config.get("Gateway_station", "s_modtype_u")
+        except: s_modtype_u = 'QPSK'
+
+        try: s_modtype_d = self.param_config.get("Gateway_station", "s_modtype_d")
+        except: s_modtype_d = 'QPSK'
 
         try: s_u_frequency = self.param_config.getint("Gateway_station", "s_u_frequency")
         except: s_u_frequency = 1985
@@ -759,8 +762,11 @@ class Gateway_station(wx.Panel):
 
         #调制方式
         ModtypeList = ['QPSK','16QAM']
-        modtype_st = wx.StaticText(self, -1, u"调制方式:")
-        self.modtype = wx.ComboBox(self, -1, s_modtype, wx.DefaultPosition, wx.DefaultSize, ModtypeList, 0)
+        modtype_st_u = wx.StaticText(self, -1, u"上行调制方式:")
+        self.modtype_u = wx.ComboBox(self, -1, s_modtype_u, wx.DefaultPosition, wx.DefaultSize, ModtypeList, 0)
+
+        modtype_st_d = wx.StaticText(self, -1, u"下行调制方式:")
+        self.modtype_d = wx.ComboBox(self, -1, s_modtype_d, wx.DefaultPosition, wx.DefaultSize, ModtypeList, 0)
 
         #上行中心频率
         u_frequency_st = wx.StaticText(self, -1, u"上行中心频率:")
@@ -786,8 +792,10 @@ class Gateway_station(wx.Panel):
         sizer2.AddGrowableCol(1)
         sizer2.Add(prb_statictext, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
         sizer2.Add(self.prb_c, 0, wx.EXPAND)
-        sizer2.Add(modtype_st, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
-        sizer2.Add(self.modtype, 0, wx.EXPAND)
+        sizer2.Add(modtype_st_u, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+        sizer2.Add(self.modtype_u, 0, wx.EXPAND)
+        sizer2.Add(modtype_st_d, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+        sizer2.Add(self.modtype_d, 0, wx.EXPAND)
         sizer2.Add(id_statictext, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
         sizer2.Add(self.id_sc, 0, wx.EXPAND)
         sizer2.Add(u_frequency_st, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
@@ -1450,7 +1458,8 @@ class MainFrame(wx.Frame):
     def OnStart(self,event):
         ###############page1#################
         self.page1.prb_c.Disable()
-        self.page1.modtype.Disable()
+        self.page1.modtype_u.Disable()
+        self.page1.modtype_d.Disable()
         self.page1.id_sc.Disable()
         self.page1.u_frequency.Disable()
         self.page1.d_frequency.Disable()
@@ -1478,7 +1487,8 @@ class MainFrame(wx.Frame):
     def OnStop(self,event):
         ###############page1#################
         self.page1.prb_c.Enable()
-        self.page1.modtype.Enable()
+        self.page1.modtype_u.Enable()
+        self.page1.modtype_d.Enable()
         self.page1.id_sc.Enable()
         self.page1.u_frequency.Enable()
         self.page1.d_frequency.Enable()
@@ -1519,7 +1529,8 @@ class MainFrame(wx.Frame):
         #Gateway_station
         self.param_config.set("Gateway_station", "s_prb_c", self.page1.prb_c.GetValue())
         self.param_config.set("Gateway_station", "s_id_sc", self.page1.id_sc.GetValue())
-        self.param_config.set("Gateway_station", "s_modtype", self.page1.modtype.GetValue())
+        self.param_config.set("Gateway_station", "s_modtype_u", self.page1.modtype_u.GetValue())
+        self.param_config.set("Gateway_station", "s_modtype_d", self.page1.modtype_d.GetValue())
         self.param_config.set("Gateway_station", "s_u_frequency", self.page1.u_frequency.GetValue())
         self.param_config.set("Gateway_station", "s_d_frequency", self.page1.d_frequency.GetValue())
 
@@ -1623,7 +1634,8 @@ class MainFrame(wx.Frame):
         param['work_mod'] = self.work_mod.GetItemLabel(self.work_mod.GetSelection())
         param['Bandwidth'] = self.page1.prb_c.GetValue()
         param['id_cell'] = self.page1.id_sc.GetValue()
-        param['mod_type'] = self.page1.modtype.GetValue()
+        param['mod_type_u'] = self.page1.modtype_u.GetValue()
+        param['mod_type_d'] = self.page1.modtype_d.GetValue()
         param['u_frequency_G'] = self.page1.u_frequency.GetValue()
         param['d_frequency_G'] = self.page1.d_frequency.GetValue()
 

@@ -70,7 +70,8 @@ class ue_ping(gr.top_block):
                 self.samp_rate = samp_rate = 4000000 
 
             self.threshold = threshold = float(param['Threshold'])
-            self.gain = gain = int(param['gain_r_T'])
+            self.gain_r = gain_r = int(param['gain_r_T'])
+            self.gain_s = gain_s = int(param['gain_s_T'])
             self.RNTI_A = RNTI_A = int(param['RNTI_A'])
             self.sacle_0 = sacle_0 = 1024
             self.sacle = sacle = 1024
@@ -86,9 +87,9 @@ class ue_ping(gr.top_block):
                 channels=range(1),
             ),
         )
-        self.uhd_usrp_source_0.set_samp_rate(4e6)
+        self.uhd_usrp_source_0.set_samp_rate(samp_rate)
         self.uhd_usrp_source_0.set_center_freq(900e6, 0)
-        self.uhd_usrp_source_0.set_gain(20, 0)
+        self.uhd_usrp_source_0.set_gain(gain_r, 0)
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
             device_addr="addr=192.168.10.2",
             stream_args=uhd.stream_args(
@@ -98,18 +99,18 @@ class ue_ping(gr.top_block):
         )
         self.uhd_usrp_sink_0.set_samp_rate(samp_rate*2)
         self.uhd_usrp_sink_0.set_center_freq(1e9, 0)
-        self.uhd_usrp_sink_0.set_gain(20, 0)
+        self.uhd_usrp_sink_0.set_gain(gain_s, 0)
         self.rational_resampler_xxx_0 = filter.rational_resampler_ccc(
                 interpolation=25,
                 decimation=24,
                 taps=None,
                 fractional_bw=None,
         )
-        self.lte_sat_ul_subframe_mapper_0 = lte_sat.ul_subframe_mapper(61)
+        self.lte_sat_ul_subframe_mapper_0 = lte_sat.ul_subframe_mapper(RNTI_A)
         self.lte_sat_ul_baseband_generator_0 = lte_sat.ul_baseband_generator()
-        self.lte_sat_layer2_ue_0 = lte_sat.layer2_ue(61,False)
-        self.lte_sat_dl_subframe_demapper_0 = lte_sat.dl_subframe_demapper(61)
-        self.lte_sat_dl_baseband_sync_0 = lte_sat.dl_baseband_sync(0.7)
+        self.lte_sat_layer2_ue_0 = lte_sat.layer2_ue(RNTI_A,False)
+        self.lte_sat_dl_subframe_demapper_0 = lte_sat.dl_subframe_demapper(RNTI_A)
+        self.lte_sat_dl_baseband_sync_0 = lte_sat.dl_baseband_sync(threshold)
         self.blocks_tuntap_pdu_1 = blocks.tuntap_pdu("tun1", 10000)
         self.blocks_multiply_const_vxx_0 = blocks.multiply_const_vcc((1.0, ))
 
@@ -307,7 +308,7 @@ class MatplotPanel(wx.Panel):
         self.axes.clear()
         self.axes.grid(self.cb_grid.IsChecked())
 
-        f = open ( '/home/lh/matplotlib/dat/subf_has_sr.dat' , 'rb' )
+        f = open ( '/home/lh/code/new_panel/matplot_data/pdsch.dat' , 'rb' )
         x = np.fromfile ( f , dtype = np.float32 , count = 10000 )
         f.close()
 
