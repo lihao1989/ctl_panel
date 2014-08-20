@@ -10,6 +10,7 @@ from gnuradio import blocks
 from gnuradio import eng_notation
 from gnuradio import gr
 from gnuradio import uhd
+from gnuradio import filter
 from gnuradio.eng_option import eng_option
 from gnuradio.filter import firdes
 from optparse import OptionParser
@@ -17,6 +18,7 @@ import lte_sat
 
 import wx  
 import sys
+import os
 import threading
 import multiprocessing
 from multiprocessing import Queue
@@ -87,9 +89,10 @@ class ue_ping(gr.top_block):
                 channels=range(1),
             ),
         )
-        self.uhd_usrp_source_0.set_samp_rate(samp_rate)
+        self.uhd_usrp_source_0.set_samp_rate(4e6)
         self.uhd_usrp_source_0.set_center_freq(900e6, 0)
         self.uhd_usrp_source_0.set_gain(gain_r, 0)
+        self.uhd_usrp_source_0.set_bandwidth(1.5e6, 0)
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
             device_addr="addr=192.168.10.2",
             stream_args=uhd.stream_args(
@@ -97,16 +100,17 @@ class ue_ping(gr.top_block):
                 channels=range(1),
             ),
         )
-        self.uhd_usrp_sink_0.set_samp_rate(samp_rate*2)
+        self.uhd_usrp_sink_0.set_samp_rate(4e6)
         self.uhd_usrp_sink_0.set_center_freq(1e9, 0)
         self.uhd_usrp_sink_0.set_gain(gain_s, 0)
+        self.uhd_usrp_sink_0.set_bandwidth(1.5e6, 0)
         self.rational_resampler_xxx_0 = filter.rational_resampler_ccc(
                 interpolation=25,
                 decimation=24,
                 taps=None,
                 fractional_bw=None,
         )
-        self.lte_sat_ul_subframe_mapper_0 = lte_sat.ul_subframe_mapper(RNTI_A)
+        self.lte_sat_ul_subframe_mapper_0 = lte_sat.ul_subframe_mapper()
         self.lte_sat_ul_baseband_generator_0 = lte_sat.ul_baseband_generator()
         self.lte_sat_layer2_ue_0 = lte_sat.layer2_ue(RNTI_A,False)
         self.lte_sat_dl_subframe_demapper_0 = lte_sat.dl_subframe_demapper(RNTI_A)
@@ -139,6 +143,8 @@ class ue_ping(gr.top_block):
     # QT sink close method reimplementation
     def get_status(self):
         status = {}
+        status['cell_id'] = self.lte_sat_dl_baseband_sync_0.get_cell_id()
+        status['prbl'] = self.lte_sat_dl_baseband_sync_0.get_prbl()
         status['pss_status'] = self.lte_sat_dl_baseband_sync_0.get_pss_status()
         status['sss_status'] = self.lte_sat_dl_baseband_sync_0.get_sss_status()
         status['pbch_status'] = self.lte_sat_dl_baseband_sync_0.get_pbch_status()
@@ -146,6 +152,12 @@ class ue_ping(gr.top_block):
         status['cfo'] = self.lte_sat_dl_baseband_sync_0.get_cfo()
         status['fte'] = self.lte_sat_dl_baseband_sync_0.get_fte()
         status['pss_pos'] = self.lte_sat_dl_baseband_sync_0.get_pss_pos()
+
+        status['fn'] = self.lte_sat_dl_subframe_demapper_0.get_fn()
+        status['sfn'] = self.lte_sat_dl_subframe_demapper_0.get_sfn()
+        status['fer'] = self.lte_sat_dl_subframe_demapper_0.get_fer()
+
+        status['pdu_sum'] = self.lte_sat_layer2_ue_0.get_mac_pdu_sum()
         return status
 
 class dl_ber_test_recv(gr.top_block):
@@ -219,6 +231,8 @@ class dl_ber_test_recv(gr.top_block):
     # QT sink close method reimplementation
     def get_status(self):
         status = {}
+        status['cell_id'] = self.lte_sat_dl_baseband_sync_0.get_cell_id()
+        status['prbl'] = self.lte_sat_dl_baseband_sync_0.get_prbl()
         status['pss_status'] = self.lte_sat_dl_baseband_sync_0.get_pss_status()
         status['sss_status'] = self.lte_sat_dl_baseband_sync_0.get_sss_status()
         status['pbch_status'] = self.lte_sat_dl_baseband_sync_0.get_pbch_status()
@@ -433,27 +447,35 @@ class MainFrame(wx.Frame):
         """
         dict_status = msg.data
 
-        global test_data
-        test_data = dict_status['matplot_data']
-        # if dict_status['pss_status']:
-        #     self.pss_status.SetValue("锁定")
-        # else:
-        #     self.pss_status.SetValue("未锁定")
-        # if dict_status['sss_status']:
-        #     self.sss_status.SetValue("锁定")
-        # else:
-        #     self.sss_status.SetValue("未锁定")
-        # if dict_status['pbch_status']:
-        #     self.pbch_status.SetValue("锁定")
-        # else:
-        #     self.pbch_status.SetValue("未锁定")
-        # if dict_status['process_state']==1:
-        #     self.process_state.SetValue("跟踪")
-        # elif dict_status['process_state']==0:
-        #     self.process_state.SetValue("捕获")
+        # global test_data
+        # test_data = dict_status['matplot_data']
+        # print dict_status
+        if dict_status['pss_status']:
+            self.pss_status.state_green()
+        else:
+            self.pss_status.state_red()
+        if dict_status['sss_status']:
+            self.sss_status.state_green()
+        else:
+            self.sss_status.state_red()
+        if dict_status['pbch_status']:
+            self.pbch_status.state_green()
+        else:
+            self.pbch_status.state_red()
+        if dict_status['process_state']==1:
+            self.process_state.state_green()
+        elif dict_status['process_state']==0:
+            self.process_state.state_red()
+        self.id_cell_t.SetValue(str(dict_status['cell_id']))
+        self.bandwidth_t.SetValue(str(dict_status['prbl']))
         self.cfo.SetValue(str(dict_status['cfo']))
         self.fte.SetValue(str(dict_status['fte']))
         self.pss_pos.SetValue(str(dict_status['pss_pos']))
+
+        self.mac_pdu_value.SetLabel(str(dict_status['pdu_sum']))
+        self.frame_error_rate_value.SetLabel(str(dict_status['fer']))
+        self.fn.SetLabel(str(dict_status['fn']))
+        self.sfn.SetLabel(str(dict_status['sfn']))
 
     def createframe(self):
 
@@ -496,14 +518,20 @@ class MainFrame(wx.Frame):
         process_state_st = wx.StaticText(self.panel, -1, u"处理状态(捕获／跟踪):\t\t\t")
         self.process_state = PanelOne(self.panel)
 
-        #MAC_PDU个数、误帧率
+        #MAC_PDU个数、误帧率、帧号、子帧号
         # status_bar_lable = "MAC_PDU个数:\t\t\t误帧率:\t"
         # self.status_bar = wx.TextCtrl(self.panel, -1, status_bar_lable, style=wx.TE_READONLY)
-        mac_pdu = wx.StaticText(self.panel, -1, u"MAC_PDU个数:\t\t\t")
+        mac_pdu = wx.StaticText(self.panel, -1, u"mac_pdu的个数:\t")
         self.mac_pdu_value = wx.StaticText(self.panel, -1, '')
 
-        frame_error_rate = wx.StaticText(self.panel, -1, u"误帧率:")
+        frame_error_rate = wx.StaticText(self.panel, -1, u"误帧率:\t")
         self.frame_error_rate_value = wx.StaticText(self.panel, -1, '')
+
+        fn_st = wx.StaticText(self.panel, -1, u"帧号:\t")
+        self.fn = wx.StaticText(self.panel, -1, '')
+
+        sfn_st = wx.StaticText(self.panel, -1, u"子帧号:\t")
+        self.sfn = wx.StaticText(self.panel, -1, '')
 
         #连接按钮
         self.connect_button = wx.Button(self.panel, -1, u"连接")
@@ -552,10 +580,15 @@ class MainFrame(wx.Frame):
 
         sizer111 = wx.FlexGridSizer(cols=4, hgap=10, vgap=10)
         sizer111.AddGrowableCol(1)
-        sizer111.Add(frame_error_rate, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+        sizer111.AddGrowableCol(3)
+        sizer111.Add(frame_error_rate, 0, wx.ALIGN_CENTER_VERTICAL)
         sizer111.Add(self.frame_error_rate_value, 0, wx.EXPAND)
-        sizer111.Add(mac_pdu, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+        sizer111.Add(mac_pdu, 0, wx.ALIGN_CENTER_VERTICAL)
         sizer111.Add(self.mac_pdu_value, 0, wx.EXPAND)
+        sizer111.Add(fn_st, 0, wx.ALIGN_CENTER_VERTICAL)
+        sizer111.Add(self.fn, 0, wx.EXPAND)
+        sizer111.Add(sfn_st, 0, wx.ALIGN_CENTER_VERTICAL)
+        sizer111.Add(self.sfn, 0, wx.EXPAND)
 
         sizer2 = wx.StaticBoxSizer(wx.StaticBox(self.panel, wx.NewId(), u'状态显示'), wx.VERTICAL)
         sizer2.Add(sizer1, 0, wx.EXPAND | wx.ALL, 10)
@@ -730,16 +763,19 @@ class MainFrame(wx.Frame):
 
     #子进程
     def start_top_block(self):
+        os.system('sudo rm  *.dat *.log')
         global param 
-        if param['work_mod'] == '音频业务演示' or param['work_mod'] == '视频业务演示': 
+        if param['work_mod'] == '1': 
             self.tb = ue_ping(**param)
-        elif param['work_mod'] == '数据测试演示':
+        elif param['work_mod'] == '0':
             self.tb = dl_ber_test_recv(**param)
         self.t1 = threading.Thread(target = self.monitor_forever)
         self.t1.setDaemon(True)
         self.t1.start()
 
         self.tb.start()
+        os.system('sudo ifconfig tun1 192.168.200.11')
+        os.system('sudo route add 192.168.200.3 tun1')
         self.tb.wait()
 
     def monitor_forever(self):
@@ -754,6 +790,16 @@ class MainFrame(wx.Frame):
 
     def stop_top_block(self):
         self.p1.terminate()
+
+        self.pss_status.state_red()
+        self.sss_status.state_red()
+        self.pbch_status.state_red()
+        self.process_state.state_red()
+        self.cfo.SetValue('0')
+        self.fte.SetValue('0')
+        self.pss_pos.SetValue('0')
+        self.id_cell_t.SetValue('0')
+        self.bandwidth_t.SetValue('0')
         print 'stop'
 
     def OnCloseWindow(self, event):

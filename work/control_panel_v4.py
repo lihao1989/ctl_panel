@@ -87,7 +87,7 @@ class Terminal(wx.Panel):
 
         #######开始布局############
         #参数窗口
-        sizer2 = wx.FlexGridSizer(cols=2, hgap=10, vgap=10)
+        sizer2 = wx.FlexGridSizer(cols=2, hgap=10, vgap=20)
         sizer2.AddGrowableCol(1)
         sizer2.Add(u_frequency_st, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
         sizer2.Add(self.u_frequency, 0, wx.EXPAND)
@@ -1331,7 +1331,7 @@ class MainFrame(wx.Frame):
         self.panel_terminal_B = PanelOne(self.panel)
 
         self.DisplayText = wx.TextCtrl(self.panel, -1, '',   
-                size=(250, 460), style=wx.TE_MULTILINE | wx.TE_READONLY) 
+                size=(250, 520), style=wx.TE_MULTILINE | wx.TE_READONLY) 
         self.DisplayText.SetBackgroundColour('gray')
 
         #模式选择
@@ -1553,14 +1553,14 @@ class MainFrame(wx.Frame):
             self.param_config.read("param.conf")
         except:
             param = {'RNTI_A':'100', 'RNTI_B':'200', 't_advance_A':'0', 't_advance_B':'0',
-                'n_pucch_A':'0','n_pucch_B':'18','data_rules_T':'规则递增','iter_num_T':'4', 
+                'n_pucch_A':'0','n_pucch_B':'18','data_rules_T':'0','iter_num_T':'4', 
                 'Delta_ss_T':'10', 'shift_T':'1', 'DMRS1_T':'4', 'decision_type_T':'soft', 'algorithm_T':'Max_Log',
                 'gain_r_T':'10', 'gain_s_T':'10', 'samp_rate_T':'2M', 'C_SRS_A':'4', 'B_SRS_A':'1', 'n_SRS_A':'4', 
                 'n_RRC_A':'0', 'C_SRS_B':'5', 'B_SRS_B':'2', 'n_SRS_B':'5', 'n_RRC_B':'0','K_TC_A':'0','K_TC_B':'1',
                 'SRS_period_A':'2','SRS_period_B':'2','SRS_offset_A':'0','SRS_offset_B':'1','SR_periodicity_A':'10',
                 'SR_periodicity_B':'10','SR_offset_A':'2','SR_offset_B':'4','t_Reordering_T':'40', 
                 't_StatusProhibit_T':'40','t_PollRetransmit_T':'40','maxRetxThreshold_T':'4', 'SN_FieldLength_T':'10',
-                'pollPDU_T':'16','pollByte_T':'125','data_rules_G':'规则递增','iter_num_G':'4', 'Delta_ss_G':'10', 
+                'pollPDU_T':'16','pollByte_T':'125','data_rules_G':'0','iter_num_G':'4', 'Delta_ss_G':'10', 
                 'shift_G':'1', 'DMRS2_G':'4','decision_type_G':'soft', 'algorithm_G':'Max_Log', 'gain_r_G':'10',
                 'gain_s_G':'10', 'samp_rate_G':'2M', 'exp_code_rate_u_G':'0.45', 'exp_code_rate_d_G':'0.45',
                 't_Reordering_G':'40', 't_StatusProhibit_G':'40','t_PollRetransmit_G':'40', 'maxRetxThreshold_G':'4', 
@@ -1574,7 +1574,10 @@ class MainFrame(wx.Frame):
             param['t_advance_B'] = self.param_config.get("Terminal", "s_t_advance_b")
             param['n_pucch_A'] = self.param_config.get("Terminal", "s_n_pucch_a")
             param['n_pucch_B'] = self.param_config.get("Terminal", "s_n_pucch_b")
-            param['data_rules_T'] = self.param_config.get("Terminal", "s_data_rules")
+            if self.param_config.get("Terminal", "s_data_rules") == '指定种子的随机序列':
+                param['data_rules_T'] = '1'
+            else:
+                param['data_rules_T'] = '0'
             param['iter_num_T'] = self.param_config.get("Terminal", "s_iter_num")
             param['Delta_ss_T'] = self.param_config.get("Terminal", "s_delta_ss")
             param['shift_T'] = self.param_config.get("Terminal", "s_shift")
@@ -1602,15 +1605,18 @@ class MainFrame(wx.Frame):
             param['SR_periodicity_B'] = self.param_config.get("Terminal", "s_sr_periodicity_b")
             param['SR_offset_A'] = self.param_config.get("Terminal", "s_sr_offset_a")
             param['SR_offset_B'] = self.param_config.get("Terminal", "s_sr_offset_b")
-            param['t_Reordering_T'] = self.param_config.get("Terminal", "s_t_reordering")
-            param['t_StatusProhibit_T'] = self.param_config.get("Terminal", "s_t_statusprohibit")
-            param['t_PollRetransmit_T'] = self.param_config.get("Terminal", "s_t_pollretransmit")
-            param['maxRetxThreshold_T'] = self.param_config.get("Terminal", "s_maxretxthreshold")
-            param['SN_FieldLength_T'] = self.param_config.get("Terminal", "s_sn_fieldlength")
-            param['pollPDU_T'] = self.param_config.get("Terminal", "s_pollpdu")
-            param['pollByte_T'] = self.param_config.get("Terminal", "s_pollbyte")
+            # param['t_Reordering_T'] = self.param_config.get("Terminal", "s_t_reordering")
+            # param['t_StatusProhibit_T'] = self.param_config.get("Terminal", "s_t_statusprohibit")
+            # param['t_PollRetransmit_T'] = self.param_config.get("Terminal", "s_t_pollretransmit")
+            # param['maxRetxThreshold_T'] = self.param_config.get("Terminal", "s_maxretxthreshold")
+            # param['SN_FieldLength_T'] = self.param_config.get("Terminal", "s_sn_fieldlength")
+            # param['pollPDU_T'] = self.param_config.get("Terminal", "s_pollpdu")
+            # param['pollByte_T'] = self.param_config.get("Terminal", "s_pollbyte")
             #Gateway_station  
-            param['data_rules_G'] = self.param_config.get("Gateway_station", "s_data_rules")
+            if self.param_config.get("Gateway_station", "s_data_rules") == '指定种子的随机序列':
+                param['data_rules_G'] = '1'
+            else:
+                param['data_rules_G'] = '0'
             param['iter_num_G'] = self.param_config.get("Gateway_station", "s_iter_num")
             param['Delta_ss_G'] = self.param_config.get("Gateway_station", "s_delta_ss")
             param['shift_G'] = self.param_config.get("Gateway_station", "s_shift")
@@ -1622,16 +1628,19 @@ class MainFrame(wx.Frame):
             param['exp_code_rate_u_G'] = self.param_config.get("Gateway_station", "s_exp_code_rate_u_sc")
             param['exp_code_rate_d_G'] = self.param_config.get("Gateway_station", "s_exp_code_rate_d_sc")
             param['samp_rate_G'] = self.param_config.get("Gateway_station", "s_samp_rate_sc")
-            param['t_Reordering_G'] = self.param_config.get("Gateway_station", "s_t_reordering")
-            param['t_StatusProhibit_G'] = self.param_config.get("Gateway_station", "s_t_statusprohibit")
-            param['t_PollRetransmit_G'] = self.param_config.get("Gateway_station", "s_t_pollretransmit")
-            param['maxRetxThreshold_G'] = self.param_config.get("Gateway_station", "s_maxretxthreshold")
-            param['SN_FieldLength_G'] = self.param_config.get("Gateway_station", "s_sn_fieldlength")
-            param['pollPDU_G'] = self.param_config.get("Gateway_station", "s_pollpdu")
-            param['pollByte_G'] = self.param_config.get("Gateway_station", "s_pollbyte")
+            # param['t_Reordering_G'] = self.param_config.get("Gateway_station", "s_t_reordering")
+            # param['t_StatusProhibit_G'] = self.param_config.get("Gateway_station", "s_t_statusprohibit")
+            # param['t_PollRetransmit_G'] = self.param_config.get("Gateway_station", "s_t_pollretransmit")
+            # param['maxRetxThreshold_G'] = self.param_config.get("Gateway_station", "s_maxretxthreshold")
+            # param['SN_FieldLength_G'] = self.param_config.get("Gateway_station", "s_sn_fieldlength")
+            # param['pollPDU_G'] = self.param_config.get("Gateway_station", "s_pollpdu")
+            # param['pollByte_G'] = self.param_config.get("Gateway_station", "s_pollbyte")
 
         #主界面的参数
-        param['work_mod'] = self.work_mod.GetItemLabel(self.work_mod.GetSelection())
+        if self.work_mod.GetItemLabel(self.work_mod.GetSelection()) == '数据测试演示':
+            param['work_mod'] = '0'
+        else:
+            param['work_mod'] = '1'
         param['Bandwidth'] = self.page1.prb_c.GetValue()
         param['id_cell'] = self.page1.id_sc.GetValue()
         param['mod_type_u'] = self.page1.modtype_u.GetValue()
@@ -1764,7 +1773,7 @@ class MainFrame(wx.Frame):
                     except:  
                         print "客户端没有数据发送，关闭连接"
                         # self.DisplayText.AppendText(u'关闭与%s %s的连接\n\n' % client_address)
-                        wx.CallAfter(Publisher().sendMessage, "update", u'关闭与%s的连接\n\n' % name)  
+                        wx.CallAfter(Publisher().sendMessage, "update", u'关闭与%s的连接\n' % name)  
                         
                         # 停止对该连接的读socket监听  
                         if s in outputs:  

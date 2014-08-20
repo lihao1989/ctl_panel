@@ -11,12 +11,14 @@ from gnuradio import eng_notation
 from gnuradio import gr
 from gnuradio import uhd
 from gnuradio.eng_option import eng_option
+from gnuradio import filter
 from gnuradio.filter import firdes
 from optparse import OptionParser
 import lte_sat
 
 import wx  
 import sys
+import os
 import threading
 import multiprocessing
 from multiprocessing import Queue
@@ -47,6 +49,7 @@ class eNB_ping(gr.top_block):
         ##################################################
         # Variables
         ##################################################
+        # print param
         try:
             if param['Bandwidth'] == '1.4':
                 self.prbl = prbl = 6
@@ -77,8 +80,8 @@ class eNB_ping(gr.top_block):
             self.gain_s = gain_s = int(param['gain_s_G'])
             self.RNTI_A = RNTI_A = int(param['RNTI_A'])
             self.id_cell = id_cell = int(param['id_cell'])
-            self.rate_d = rate_d = int(param['exp_code_rate_d_G'])
-            self.rate_u = rate_u = int(param['exp_code_rate_u_G'])
+            self.rate_d = rate_d = float(param['exp_code_rate_d_G'])
+            self.rate_u = rate_u = float(param['exp_code_rate_u_G'])
             self.DMRS2_G = DMRS2_G = int(param['DMRS2_G'])
             self.sacle_0 = sacle_0 = 1024
             self.sacle = sacle = 1024
@@ -97,6 +100,7 @@ class eNB_ping(gr.top_block):
         self.uhd_usrp_source_0.set_samp_rate(samp_rate)
         self.uhd_usrp_source_0.set_center_freq(1e9, 0)
         self.uhd_usrp_source_0.set_gain(gain_r, 0)
+        self.uhd_usrp_source_0.set_bandwidth(1.5e6, 0)
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
             device_addr="addr=192.168.10.2",
             stream_args=uhd.stream_args(
@@ -107,6 +111,7 @@ class eNB_ping(gr.top_block):
         self.uhd_usrp_sink_0.set_samp_rate(samp_rate)
         self.uhd_usrp_sink_0.set_center_freq(9.0e8, 0)
         self.uhd_usrp_sink_0.set_gain(gain_s, 0)
+        self.uhd_usrp_sink_0.set_bandwidth(1.5e6, 0)
         self.rational_resampler_xxx_0 = filter.rational_resampler_ccc(
                 interpolation=25,
                 decimation=24,
@@ -114,7 +119,7 @@ class eNB_ping(gr.top_block):
                 fractional_bw=None,
         )
         self.lte_sat_ul_subframe_demapper_0 = lte_sat.ul_subframe_demapper(id_cell,prbl)
-        self.lte_sat_ul_baseband_sync_0 = lte_sat.ul_baseband_sync(prbl,fftl,id_cell,False)
+        self.lte_sat_ul_baseband_sync_0 = lte_sat.ul_baseband_sync(prbl,fftl,id_cell,0.7,False)
         self.lte_sat_layer2_0 = lte_sat.layer2(id_cell,prbl,mod_type_d,rate_d,mod_type_u,rate_u,DMRS2_G,False)
         self.lte_sat_dl_subframe_mapper_0_0 = lte_sat.dl_subframe_mapper(prbl,id_cell,False)
         self.lte_sat_dl_baseband_generator_0 = lte_sat.dl_baseband_generator(prbl, fftl)
@@ -360,25 +365,25 @@ class MainFrame(wx.Frame):
         从线程接收数据并且在界面更新显示
         """
         dict_status = msg.data
-        if dict_status['pss_status']:
-            self.pss_status.SetValue("锁定")
-        else:
-            self.pss_status.SetValue("未锁定")
-        if dict_status['sss_status']:
-            self.sss_status.SetValue("锁定")
-        else:
-            self.sss_status.SetValue("未锁定")
-        if dict_status['pbch_status']:
-            self.pbch_status.SetValue("锁定")
-        else:
-            self.pbch_status.SetValue("未锁定")
-        if dict_status['process_state']==1:
-            self.process_state.SetValue("跟踪")
-        elif dict_status['process_state']==0:
-            self.process_state.SetValue("捕获")
-        self.cfo.SetValue(str(dict_status['cfo']))
-        self.fte.SetValue(str(dict_status['fte']))
-        self.pss_pos.SetValue(str(dict_status['pss_pos']))
+        # if dict_status['pss_status']:
+        #     self.pss_status.SetValue("锁定")
+        # else:
+        #     self.pss_status.SetValue("未锁定")
+        # if dict_status['sss_status']:
+        #     self.sss_status.SetValue("锁定")
+        # else:
+        #     self.sss_status.SetValue("未锁定")
+        # if dict_status['pbch_status']:
+        #     self.pbch_status.SetValue("锁定")
+        # else:
+        #     self.pbch_status.SetValue("未锁定")
+        # if dict_status['process_state']==1:
+        #     self.process_state.SetValue("跟踪")
+        # elif dict_status['process_state']==0:
+        #     self.process_state.SetValue("捕获")
+        # self.cfo.SetValue(str(dict_status['cfo']))
+        # self.fte.SetValue(str(dict_status['fte']))
+        # self.pss_pos.SetValue(str(dict_status['pss_pos']))
 
 
     def createframe(self):
@@ -535,7 +540,7 @@ class MainFrame(wx.Frame):
               
             #处理input
             for s in readable:  
-                data = s.recv(2048) 
+                data = s.recv(4096) 
 
                 if data: 
                     if data == 'start_block':
@@ -548,7 +553,8 @@ class MainFrame(wx.Frame):
                     elif data == 'stop_block':
                         self.stop_top_block() 
                     else:
-                        global param   
+                        global param 
+                        # print data  
                         param = json.loads(data)
                         # A readable client socket has data  
                         print 'received param from ', s.getpeername() 
@@ -611,15 +617,19 @@ class MainFrame(wx.Frame):
     #子进程
     def start_top_block(self):
         global param 
-        if param['work_mod'] == '音频业务演示' or param['work_mod'] == '视频业务演示': 
+        if param['work_mod'] == '1':
             self.tb = eNB_ping(**param)
-        elif param['work_mod'] == '数据测试演示':
+            # os.system('sudo ifconfig tun0 192.168.200.3')
+            # os.system('sudo route add default metric 10 dev tun0')
+        elif param['work_mod'] == '0':
             self.tb = dl_ber_test_send(**param)
         self.t1 = threading.Thread(target = self.monitor_forever)
         self.t1.setDaemon(True)
         self.t1.start()
 
         self.tb.start()
+        os.system('sudo ifconfig tun0 192.168.200.3')
+        os.system('sudo route add 192.168.200.11 dev tun0')
         self.tb.wait()
 
     def monitor_forever(self):
