@@ -1440,10 +1440,9 @@ class MainFrame(wx.Frame):
             self.panel_terminal_B.state_red()
 
         if self.status.has_key('gateway'):
-            if self.status['gateway'] =='true':
-                self.panel_gateway.state_green()
-            else:
-                self.panel_gateway.state_red()
+            self.panel_gateway.state_green()
+        else:
+            self.panel_gateway.state_red()
 
         if self.work_mod.GetSelection()==0:
             try:
@@ -1736,20 +1735,24 @@ class MainFrame(wx.Frame):
                         wx.CallAfter(Publisher().sendMessage, "update", u'与 %s %s建立连接\n' % self.client_address)
                         self.connection.setblocking(False)  
                         self.inputs.append(self.connection)  
-  
                         # 给连接一个队列，该队列用于发送数据 
                         message_queues[self.connection] = Queue.Queue() 
+                        print self.inputs
                 else: 
                     data = s.recv(1024) 
                     try:
                         message = json.loads(data)
                         if message:  
-                            print message
+                            # print message
                             # message.update(self.clients)
                             if message.has_key('terminal') and message['terminal'] == 'true':
                                 if self.clients.has_key('A_ip'):
-                                    self.clients['B_ip'] = self.client_address
-                                self.clients['A_ip'] = self.client_address
+                                    self.clients['B_ip'] = s
+                                if not self.clients.has_key('A_ip'):
+                                    self.clients['A_ip'] = s
+                            elif message.has_key('gateway') and message['gateway'] == 'true':
+                                self.clients['gateway'] = s
+
                             # 客户端有数据发送   
                             # wx.CallAfter(Publisher().sendMessage, "update_t", message)
                             # message_queues[s].put(data)
@@ -1757,25 +1760,38 @@ class MainFrame(wx.Frame):
                             if s not in outputs:
                                 outputs.append(s)
 
-                        if message.has_key('gateway'):
-                            if message['gateway'] == 'false':
-                                name = '信关站'
-                        if message.has_key('terminal'):
-                            if message['terminal'] == 'false':
-                                name = '终端'
-                                if self.clients.has_key('B_ip'):
-                                    print 'bbb'
-                                    del self.clients['B_ip']
-                                else:
-                                    print 'aaa'
-                                    del self.clients['A_ip']
-                        print self.clients
+                        # if message.has_key('gateway'):
+                        #     if message['gateway'] == 'false':
+                        # if message.has_key('terminal'):
+                        #     if message['terminal'] == 'false':
+                        #         if self.clients.has_key('B_ip'):
+                        #             del self.clients['B_ip']
+                        #         else:
+                        #             del self.clients['A_ip']
+                        # print self.clients
                     except:  
                         print "客户端没有数据发送，关闭连接"
                         # self.DisplayText.AppendText(u'关闭与%s %s的连接\n\n' % client_address)
-                        wx.CallAfter(Publisher().sendMessage, "update", u'关闭与%s的连接\n' % name)  
+                        # try:
+                        #     wx.CallAfter(Publisher().sendMessage, "update", u'关闭与%s的连接\n' % name) 
+                        # except:pass 
                         
                         # 停止对该连接的读socket监听  
+                        # try:
+                        if self.clients.has_key('B_ip') and self.clients['B_ip'] == s:
+                            del self.clients['B_ip']
+                            wx.CallAfter(Publisher().sendMessage, "update", u'关闭与%s的连接\n' % '终端B') 
+                        if self.clients.has_key('A_ip') and self.clients['A_ip'] == s:
+                            del self.clients['A_ip']
+                            wx.CallAfter(Publisher().sendMessage, "update", u'关闭与%s的连接\n' % '终端A') 
+                        if self.clients.has_key('gateway') and self.clients['gateway'] == s:
+                            # message['gateway'] = 'false'
+                            del self.clients['gateway']
+                            wx.CallAfter(Publisher().sendMessage, "update", u'关闭与%s的连接\n' % '信关站') 
+                        # except:
+                        #     message['gateway'] = 'false'
+                        #     wx.CallAfter(Publisher().sendMessage, "update", u'关闭与%s的连接\n' % '信关站') 
+
                         if s in outputs:  
                             outputs.remove(s)  
                         self.inputs.remove(s)  

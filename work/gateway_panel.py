@@ -613,6 +613,8 @@ class MainFrame(wx.Frame):
             data_status = json.dumps(self.status)
             self.client.send(data_status)
             time.sleep(1)
+            if self.status.has_key('gateway'):
+                del self.status['gateway']
 
     #子进程
     def start_top_block(self):
@@ -647,14 +649,14 @@ class MainFrame(wx.Frame):
         print 'stop'
 
     def OnCloseWindow(self, event):
-        try:
-            self.status['gateway']="false"
-            data_status = json.dumps(self.status)
-            self.client.send(data_status)
-            self.client.close() 
-            self.Destroy()
-        except:
-            self.Destroy()
+        # try:
+        #     self.status['gateway']="false"
+        #     data_status = json.dumps(self.status)
+        #     self.client.send(data_status)
+        #     self.client.close() 
+        #     self.Destroy()
+        # except:
+        self.Destroy()
 
 class MyApp(wx.App):
     def OnInit(self):
