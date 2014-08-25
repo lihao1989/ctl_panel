@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <time.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#define MAX 100000
+#define MAX 100
 using namespace std;
 
 //快速排序
@@ -43,7 +43,7 @@ void quick_sort(int *a,int low,int high)
 		a[i]=key;
 		quick_sort(a,low,i-1);
 		quick_sort(a,i+1,high);
-	}	
+	}
 }
 
 //冒泡排序
@@ -160,7 +160,7 @@ void heap_sort(int *a,int n)
 {
 	int i;
 	for(i=n/2-1;i>=0;i--)
-		heapadjust(a,i,n);
+		heapadjust(a,i,n-1);
 	for(i=n-1;i>0;i--)
 	{
 		a[0]=a[0]^a[i];
@@ -222,15 +222,14 @@ int main()
 	srand(time(0));
 	for(int i=0;i<MAX;i++)
 		a[i]=rand()%MAX;
-
 	pt::ptime quick_time_now = pt::microsec_clock::universal_time();
-	quick_sort(a,0,MAX-1);
+	// quick_sort(a,0,MAX-1);
 	// bubble_sort(a,MAX);
 	// bubble_sort2(a,MAX);
 	// selset_sort(a,MAX);
 	// insert_sort(a,MAX);
 	// shell_sort(a,MAX);
-	// heap_sort(a,MAX);
+	heap_sort(a,MAX);
 	// merge_sort(a,MAX);
 	pt::ptime quick_time_end = pt::microsec_clock::universal_time();
 	pt::time_duration quick_time = quick_time_end - quick_time_now;
