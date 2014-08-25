@@ -34,6 +34,26 @@ void get_next(char* T,int n,int *next)
 	}
 }
 
+void get_next_2(char * T,int n, int *next)
+{
+	int i=0;j=-1;
+	next[0]=-1;
+	while(i<n)
+	{
+		if(j==-1 || T[i]==T[j])
+		{
+			++i;
+			++j;
+			if(T[i]!=T[j])
+				next[i]=j;
+			else
+				next[i]=next[j];
+		}
+		else
+			j=next[j];
+	}
+}
+
 /**
  * @brief [KMP查找子串T在主串S中的位置，如果不存在返回-1]
  * 
